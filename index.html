@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>QR 文件传输</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div id="app">
+    <!-- 摄像头预览 -->
+    <video id="camera" autoplay playsinline></video>
+    <canvas id="canvas" hidden></canvas>
+
+    <!-- 九宫格扫描框 -->
+    <div id="grid-overlay">
+      <div class="grid-row" data-row="0"><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div></div>
+      <div class="grid-row" data-row="1"><div class="grid-cell"></div><div class="grid-cell center"></div><div class="grid-cell"></div></div>
+      <div class="grid-row" data-row="2"><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div></div>
+    </div>
+
+    <!-- 状态面板 -->
+    <div id="status-panel">
+      <div id="status-text">点击下方按钮开始扫描</div>
+      <div id="progress-container">
+        <div id="progress-bar"><div id="progress-fill"></div></div>
+        <span id="progress-text">0%</span>
+      </div>
+      <div id="frame-info">帧: 0 / 0</div>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div id="controls">
+      <button id="btn-start" class="btn btn-primary">开始扫描</button>
+      <button id="btn-stop" class="btn btn-secondary">停止</button>
+      <button id="btn-download" class="btn btn-success" disabled>下载文件</button>
+      <button id="btn-reset" class="btn btn-secondary">重置</button>
+    </div>
+  </div>
+</body>
+</html>
