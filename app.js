@@ -262,7 +262,16 @@ function reset() {
 }
 
 // ============== 事件绑定 ==============
-btnStart.addEventListener('click', startScanning);
+btnStart.addEventListener('click', async () => {
+  // 如果摄像头还没启动，先启动
+  if (!stream) {
+    btnStart.disabled = true;
+    btnStart.textContent = '正在打开摄像头...';
+    await startCamera();
+    btnStart.textContent = '开始扫描';
+  }
+  startScanning();
+});
 btnStop.addEventListener('click', stopScanning);
 btnDownload.addEventListener('click', downloadFile);
 btnReset.addEventListener('click', reset);
@@ -273,4 +282,4 @@ if ('serviceWorker' in navigator) {
 }
 
 // ============== 启动 ==============
-startCamera();
+// 摄像头由用户点击按钮触发，不自动启动
