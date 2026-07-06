@@ -39,10 +39,10 @@ async function startCamera() {
   statusText.textContent = '正在请求摄像头权限...';
   try {
     stream = await navigator.mediaDevices.getUserMedia({
-      video: {
+     video: {
         facingMode: 'environment',
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        width: { min: 1920, ideal: 3840 },
+        height: { min: 1080, ideal: 2160 }
       }
     });
     video.srcObject = stream;
@@ -51,7 +51,7 @@ async function startCamera() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    statusText.textContent = '摄像头已就绪，点击开始扫描';
+    statusText.textContent = `摄像头已就绪 (${video.videoWidth}×${video.videoHeight})`;
     btnStart.disabled = false;
     btnStop.disabled = false;
   } catch (err) {
