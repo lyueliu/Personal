@@ -1,45 +1,217 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#1a1a2e">
-  <title>QR 文件传输</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="manifest" href="manifest.json">
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
-  <script src="app.js" defer></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1a1a2e" />
+
+    <title>离线文件传输 · 二维码解析端</title>
+    <link rel="manifest" href="manifest.json" />
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #1a1a2e;
+            background-image: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #a0a0c0;
+        }
+
+        .mode-switch {
+            display: flex;
+            gap: .5rem;
+            background: rgba(255,255,255,.05);
+            border-radius: .75rem;
+            padding: .375rem;
+            margin-bottom: 1.25rem;
+        }
+        .mode-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .375rem;
+            padding: .625rem;
+            border: none;
+            border-radius: .5rem;
+            background: transparent;
+            color: #8080a0;
+            font-size: .8125rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background: rgba(108,99,255,.25);
+            color: #6c63ff;
+        }
+
+        .upload-section {
+            display: none; /* 手机默认隐藏，PC可切 */
+            margin-bottom: 1.25rem;
+        }
+        .upload-zone {
+            background: rgba(255,255,255,.05);
+            border: 2px dashed rgba(255,255,255,.2);
+            border-radius: 1rem;
+            padding: 2.5rem 1.25rem;
+            text-align: center;
+        }
+
+        .camera-section {
+            margin-bottom: 1.25rem;
+        }
+        .camera-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #000;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        #cameraPreview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+        .scan-frame {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            width: 70%; height: 60%;
+            max-width: 20rem;
+        }
+        .scan-corner {
+            position: absolute;
+            width: 1.5rem; height: 1.5rem;
+            border-color: #6c63ff;
+            border-style: solid;
+        }
+        .scan-corner-tl { top:0;left:0;border-width:3px 0 0 3px;border-radius:.25rem 0 0 0; }
+        .scan-corner-tr { top:0;right:0;border-width:3px 3px 0 0;border-radius:0 .25rem 0 0; }
+        .scan-corner-bl { bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 .25rem; }
+        .scan-corner-br { bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 .25rem 0; }
+
+        .scan-line {
+            position: absolute;
+            top: 0; left: 5%;
+            width: 90%; height: 2px;
+            background: linear-gradient(90deg,transparent,#6c63ff,transparent);
+            animation: scanMove 2s ease-in-out infinite;
+        }
+        @keyframes scanMove {
+            0%,100%{ top:0; }
+            50%{ top:calc(100% - 2px); }
+        }
+
+        .camera-controls {
+            margin-top: .5rem;
+            padding: 1rem;
+            background: rgba(255,255,255,.05);
+            border-radius: .75rem;
+            display: flex;
+            justify-content: center;
+        }
+        .capture-btn {
+            width: 4rem; height: 4rem;
+            border-radius: 50%;
+            border: 3px solid #6c63ff;
+            background: rgba(108,99,255,.15);
+            color: #6c63ff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: .8125rem;
+            color: #606080;
+            margin-top: 1.5rem;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
+
 <body>
-  <div id="app">
-    <!-- 摄像头预览 -->
-    <video id="camera" autoplay playsinline></video>
-    <canvas id="canvas" hidden></canvas>
+<div class="container">
 
-    <!-- 九宫格扫描框 -->
-    <div id="grid-overlay">
-      <div class="grid-row" data-row="0"><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div></div>
-      <div class="grid-row" data-row="1"><div class="grid-cell"></div><div class="grid-cell center"></div><div class="grid-cell"></div></div>
-      <div class="grid-row" data-row="2"><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div></div>
+    <header class="header">
+        <h1>离线文件传输工具</h1>
+        <p class="subtitle">二维码解析端 · 相机扫描</p>
+    </header>
+
+    <div class="mode-switch">
+        <button class="mode-btn" id="uploadModeBtn">📁 上传文件夹</button>
+        <button class="mode-btn active" id="cameraModeBtn">📷 拍照扫描</button>
     </div>
 
-    <!-- 状态面板 -->
-    <div id="status-panel">
-      <div id="status-text">点击下方按钮开始扫描</div>
-      <div id="progress-container">
-        <div id="progress-bar"><div id="progress-fill"></div></div>
-        <span id="progress-text">0%</span>
-      </div>
-      <div id="frame-info">帧: 0 / 0</div>
-    </div>
+    <section class="upload-section" id="uploadSection">
+        <div class="upload-zone">
+            <p>（桌面端使用）选择包含二维码序列的文件夹</p>
+        </div>
+    </section>
 
-    <!-- 控制按钮 -->
-    <div id="controls">
-      <button id="btn-start" class="btn btn-primary">开始扫描</button>
-      <button id="btn-stop" class="btn btn-secondary">停止</button>
-      <button id="btn-download" class="btn btn-success" disabled>下载文件</button>
-      <button id="btn-reset" class="btn btn-secondary">重置</button>
-    </div>
-  </div>
+    <section class="camera-section" id="cameraSection">
+        <div class="camera-viewport">
+            <video id="cameraPreview" autoplay playsinline muted></video>
+            <div class="camera-overlay">
+                <div class="scan-frame">
+                    <div class="scan-corner scan-corner-tl"></div>
+                    <div class="scan-corner scan-corner-tr"></div>
+                    <div class="scan-corner scan-corner-bl"></div>
+                    <div class="scan-corner scan-corner-br"></div>
+                    <div class="scan-line"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="camera-controls">
+            <button class="capture-btn" id="captureBtn" title="开始扫描">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+
+    <footer class="footer">
+        准备就绪，点击“开始扫描”启用相机
+    </footer>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
