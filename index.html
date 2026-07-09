@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#1a1a2e" />
 
     <title>离线文件传输 · 二维码解析端</title>
+    <link rel="stylesheet" href="style.css" />
     <link rel="manifest" href="manifest.json" />
 
     <style>
@@ -134,12 +135,13 @@
         }
 
         .camera-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-top: .5rem;
             padding: 1rem;
             background: rgba(255,255,255,.05);
             border-radius: .75rem;
-            display: flex;
-            justify-content: center;
         }
         .capture-btn {
             width: 4rem; height: 4rem;
@@ -151,6 +153,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .capture-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #505060;
+        }
+        .capture-btn.scanning {
+            border-color: #ff5252;
+            background: rgba(255,82,82,.15);
+            color: #ff5252;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100%{ transform: scale(1); }
+            50%{ transform: scale(1.08); }
         }
 
         .footer {
@@ -186,6 +205,7 @@
     <section class="camera-section" id="cameraSection">
         <div class="camera-viewport">
             <video id="cameraPreview" autoplay playsinline muted></video>
+            <canvas id="decodeCanvas" style="display:none;"></canvas>
             <div class="camera-overlay">
                 <div class="scan-frame">
                     <div class="scan-corner scan-corner-tl"></div>
@@ -198,17 +218,32 @@
         </div>
 
         <div class="camera-controls">
+            <div class="camera-info">
+                <span id="cameraStatusText">准备就绪</span>
+                <span class="scan-progress" id="scanProgressText" style="display:none;"></span>
+            </div>
+            <button class="switch-camera-btn" id="switchCameraBtn" title="切换摄像头" style="display:none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                </svg>
+            </button>
             <button class="capture-btn" id="captureBtn" title="开始扫描">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="9"/>
                 </svg>
             </button>
+            <button class="stop-btn" id="stopScanBtn" title="停止扫描" style="display:none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                </svg>
+            </button>
         </div>
     </section>
 
     <footer class="footer">
-        准备就绪，点击“开始扫描”启用相机
+        <span id="footerStatus">准备就绪，点击"开始扫描"启用相机</span>
     </footer>
 </div>
 
