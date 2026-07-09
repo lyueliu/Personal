@@ -1,30 +1,57 @@
-const CACHE = 'qr-transfer-v1';
-const ASSETS = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json'];
+/* 离线文件传输工具 - Service Worker */
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
-  );
-});
+const CACHE_NAME = 'qrcode-file-transfer-v1';
+const ASSETS = [
+    'index.html',
+    'style.css',
+    'app.js',
+    'manifest.json'
+];
 
-self.addEventListener('fetch', e => {
-  // 对于 jsQR CDN，网络优先，失败时回退缓存
-  if (e.request.url.includes('jsQR')) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
+// 安装时：缓存核心资源
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(ASSETS);
+        })
     );
-    return;
-  }
-  // 其他资源缓存优先
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  );
+    self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
-  );
+// 激活时：清理旧缓存
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames
+                    .filter((name) => name !== CACHE_NAME)
+                    .map((name) => caches.delete(name))
+            );
+        })
+    );
+    self.clients.claim();
+});
+
+// 拦截请求：缓存优先，网络回退
+self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            return fetch(event.request).then((response) => {
+                // 只缓存同源请求
+                if (response && response.ok && event.request.url.startsWith(self.location.origin)) {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return response;
+            }).catch(() => {
+                // 离线时返回错误信息
+                return new Response('离线模式：无法加载资源', { status: 503 });
+            });
+        })
+    );
 });
