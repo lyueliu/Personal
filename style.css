@@ -1,216 +1,815 @@
+/* ===== 全局重置与基准 ===== */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #fff;
-  user-select: none;
-  -webkit-user-select: none;
+html {
+    font-size: 16px; /* 基准: 1rem = 16px */
+    -webkit-text-size-adjust: 100%;
 }
 
-#app {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1.25rem; /* 20px */
 }
 
-/* 摄像头 */
-#camera {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  position: absolute;
-  top: 0; left: 0;
+.container {
+    max-width: 42.5rem; /* 680px */
+    width: 100%;
+    margin: 0 auto;
 }
 
-/* 九宫格扫描框 */
-#grid-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(90vw, 90vh);
-  height: min(90vw, 90vh);
-  display: flex;
-  flex-direction: column;
-  pointer-events: none;
+/* ===== 头部 ===== */
+.header {
+    text-align: center;
+    margin-bottom: 1.875rem; /* 30px */
+    padding: 1.875rem 1.25rem 1.25rem; /* 30px 20px 20px */
 }
 
-.grid-row {
-  display: flex;
-  flex: 1;
+.header h1 {
+    font-size: 1.75rem; /* 28px */
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem; /* 8px */
+    letter-spacing: 0.0625rem; /* 1px */
 }
 
-.grid-cell {
-  flex: 1;
-  border: 1px solid rgba(0, 255, 255, 0.4);
-  background: rgba(0, 255, 255, 0.03);
+.subtitle {
+    font-size: 0.875rem; /* 14px */
+    color: #a0a0c0;
 }
 
-.grid-cell.center {
-  border-color: rgba(0, 255, 128, 0.6);
-  background: rgba(0, 255, 128, 0.05);
+/* ===== 上传区 ===== */
+.upload-section {
+    margin-bottom: 1.25rem; /* 20px */
 }
 
-/* 解码成功闪绿色 */
-.grid-cell.decoded {
-  border-color: rgba(0, 255, 0, 0.8);
-  background: rgba(0, 255, 0, 0.1);
-  animation: flash 0.3s ease-out;
+.upload-zone {
+    background: rgba(255, 255, 255, 0.05);
+    border: 0.125rem dashed rgba(255, 255, 255, 0.2); /* 2px */
+    border-radius: 1rem; /* 16px */
+    padding: 2.5rem 1.25rem; /* 40px 20px */
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
-/* 同步码闪蓝色 */
-.grid-cell.center.synced {
-  border-color: rgba(0, 128, 255, 0.8);
-  background: rgba(0, 128, 255, 0.1);
-  animation: flash 0.3s ease-out;
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: #6c63ff;
+    background: rgba(108, 99, 255, 0.08);
 }
 
-@keyframes flash {
-  0% { opacity: 0.3; }
-  100% { opacity: 1; }
+.upload-icon {
+    color: #6c63ff;
+    margin-bottom: 1rem; /* 16px */
 }
 
-/* 状态面板 */
-#status-panel {
-  position: absolute;
-  bottom: 80px;
-  left: 0;
-  right: 0;
-  padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  text-align: center;
+.upload-text {
+    font-size: 1rem; /* 16px */
+    color: #c0c0e0;
+    margin-bottom: 0.5rem; /* 8px */
 }
 
-#status-text {
-  font-size: 14px;
-  margin-bottom: 8px;
-  min-height: 20px;
+.upload-hint {
+    font-size: 0.75rem; /* 12px */
+    color: #8080a0;
+    margin-bottom: 1.25rem; /* 20px */
 }
 
-#progress-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+.hidden-input {
+    display: none;
 }
 
-#progress-bar {
-  flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-#progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #00ff88, #00ccff);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-#progress-text {
-  font-size: 13px;
-  color: #aaa;
-  min-width: 36px;
-  text-align: right;
-}
-
-#frame-info {
-  font-size: 12px;
-  color: #888;
-}
-
-/* 控制按钮 */
-#controls {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
+/* ===== 按钮 ===== */
 .btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn:active {
-  transform: scale(0.95);
+    padding: 0.75rem 1.75rem; /* 12px 28px */
+    border: none;
+    border-radius: 0.5rem; /* 8px */
+    font-size: 0.9375rem; /* 15px */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.03125rem; /* 0.5px */
 }
 
 .btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .btn-primary {
-  background: #00ccff;
-  color: #000;
+    background: #6c63ff;
+    color: white;
 }
 
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.btn-primary:hover:not(:disabled) {
+    background: #5a52e0;
+    transform: translateY(-0.0625rem); /* -1px */
+    box-shadow: 0 0.25rem 0.9375rem rgba(108, 99, 255, 0.4); /* 0 4px 15px */
 }
 
 .btn-success {
-  background: #00ff88;
-  color: #000;
+    background: #00c853;
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #00b34a;
+    transform: translateY(-0.0625rem); /* -1px */
+    box-shadow: 0 0.25rem 0.9375rem rgba(0, 200, 83, 0.4); /* 0 4px 15px */
 }
 
 .btn-danger {
-  background: #ff3366;
-  color: #fff;
+    background: #ff5252;
+    color: white;
 }
 
-/* 摄像头权限提示 */
-#permission-hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 12px;
+/* ===== 文件夹信息 ===== */
+.folder-info {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem; /* 12px */
+    padding: 1rem 1.25rem; /* 16px 20px */
+    margin-top: 0.75rem; /* 12px */
+    line-height: 1.8;
 }
 
-#permission-hint p {
-  margin-bottom: 16px;
-  font-size: 16px;
+.folder-info p {
+    font-size: 0.875rem; /* 14px */
+    color: #b0b0d0;
 }
 
-/* 响应式 */
+/* ===== 进度区 ===== */
+.progress-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem; /* 12px */
+    padding: 1.25rem; /* 20px */
+    margin-bottom: 1.25rem; /* 20px */
+}
+
+.progress-section h3 {
+    font-size: 1rem; /* 16px */
+    margin-bottom: 1rem; /* 16px */
+    color: #c0c0e0;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* 12px */
+    margin-bottom: 0.75rem; /* 12px */
+}
+
+.progress-bar {
+    flex: 1;
+    height: 0.625rem; /* 10px */
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.3125rem; /* 5px */
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #6c63ff, #00c853);
+    border-radius: 0.3125rem; /* 5px */
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 600;
+    color: #6c63ff;
+    min-width: 2.8125rem; /* 45px */
+    text-align: right;
+}
+
+.status-text {
+    font-size: 0.875rem; /* 14px */
+    color: #a0a0c0;
+    text-align: center;
+}
+
+/* ===== 结果区 ===== */
+.result-section {
+    margin-bottom: 1.25rem; /* 20px */
+}
+
+.result-section h3 {
+    font-size: 1rem; /* 16px */
+    margin-bottom: 0.75rem; /* 12px */
+    color: #c0c0e0;
+}
+
+.result-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem; /* 12px */
+    padding: 1.25rem; /* 20px */
+}
+
+.result-info p {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.8;
+    color: #b0b0d0;
+}
+
+/* ===== 帧列表 ===== */
+.frame-list {
+    margin-top: 1rem; /* 16px */
+    padding-top: 1rem; /* 16px */
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.1); /* 1px */
+}
+
+.frame-list h4 {
+    font-size: 0.875rem; /* 14px */
+    color: #c0c0e0;
+    margin-bottom: 0.75rem; /* 12px */
+}
+
+#frameListContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem; /* 6px */
+    max-height: 18.75rem; /* 300px */
+    overflow-y: auto;
+}
+
+.frame-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem; /* 10px */
+    padding: 0.5rem 0.75rem; /* 8px 12px */
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 0.5rem; /* 8px */
+    font-size: 0.8125rem; /* 13px */
+    transition: all 0.2s ease;
+}
+
+.frame-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.frame-item.frame-item-conflict {
+    background: rgba(255, 171, 64, 0.08);
+    border-left: 0.1875rem solid #ffab40; /* 3px */
+}
+
+.frame-item.frame-item-failed {
+    background: rgba(255, 82, 82, 0.08);
+    border-left: 0.1875rem solid #ff5252; /* 3px */
+}
+
+.frame-item.frame-item-success {
+    border-left: 0.1875rem solid #00c853; /* 3px */
+}
+
+.frame-number {
+    min-width: 3.75rem; /* 60px */
+    font-weight: 600;
+    color: #a0a0c0;
+    flex-shrink: 0;
+}
+
+.frame-status {
+    flex: 1;
+    font-size: 0.75rem; /* 12px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.frame-status-success {
+    color: #00c853;
+}
+
+.frame-status-failed {
+    color: #ff5252;
+}
+
+.frame-status-conflict {
+    color: #ffab40;
+}
+
+.frame-action {
+    flex-shrink: 0;
+}
+
+.btn-sm {
+    padding: 0.3125rem 0.75rem; /* 5px 12px */
+    font-size: 0.75rem; /* 12px */
+    border-radius: 0.375rem; /* 6px */
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-retry {
+    background: #6c63ff;
+    color: white;
+}
+
+.btn-retry:hover {
+    background: #5a52e0;
+    transform: translateY(-0.0625rem); /* -1px */
+}
+
+.btn-retry:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 帧列表滚动条 */
+#frameListContainer::-webkit-scrollbar {
+    width: 0.25rem; /* 4px */
+}
+
+#frameListContainer::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#frameListContainer::-webkit-scrollbar-thumb {
+    background: rgba(108, 99, 255, 0.3);
+    border-radius: 0.125rem; /* 2px */
+}
+
+/* ===== 错误信息 ===== */
+.result-errors {
+    margin-top: 1rem; /* 16px */
+    padding-top: 1rem; /* 16px */
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.1); /* 1px */
+}
+
+.result-errors h4 {
+    font-size: 0.875rem; /* 14px */
+    color: #ffab40;
+    margin-bottom: 0.5rem; /* 8px */
+}
+
+.result-errors ul {
+    list-style: none;
+    padding: 0;
+}
+
+.result-errors li {
+    font-size: 0.8125rem; /* 13px */
+    color: #ff8a65;
+    padding: 0.25rem 0; /* 4px 0 */
+    padding-left: 1rem; /* 16px */
+    position: relative;
+}
+
+.result-errors li::before {
+    content: "⚠";
+    position: absolute;
+    left: 0;
+}
+
+/* ===== 下载区 ===== */
+.download-section {
+    margin-bottom: 1.25rem; /* 20px */
+}
+
+.download-section h3 {
+    font-size: 1rem; /* 16px */
+    margin-bottom: 0.75rem; /* 12px */
+    color: #c0c0e0;
+}
+
+.download-actions {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem; /* 12px */
+    padding: 1.25rem; /* 20px */
+    text-align: center;
+}
+
+.file-preview {
+    margin-top: 0.75rem; /* 12px */
+    padding-top: 0.75rem; /* 12px */
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.1); /* 1px */
+}
+
+.file-preview img {
+    max-width: 12.5rem; /* 200px */
+    max-height: 12.5rem; /* 200px */
+    border-radius: 0.5rem; /* 8px */
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1); /* 1px */
+}
+
+/* ===== 底部状态 ===== */
+.footer {
+    text-align: center;
+    padding: 1.25rem; /* 20px */
+    color: #606080;
+    font-size: 0.8125rem; /* 13px */
+}
+
+/* ===== 模式切换 ===== */
+.mode-switch {
+    display: flex;
+    gap: 0.5rem; /* 8px */
+    margin-bottom: 1.25rem; /* 20px */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem; /* 12px */
+    padding: 0.375rem; /* 6px */
+}
+
+.mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem; /* 6px */
+    padding: 0.625rem 1rem; /* 10px 16px */
+    border: none;
+    border-radius: 0.5rem; /* 8px */
+    background: transparent;
+    color: #8080a0;
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+    color: #c0c0e0;
+}
+
+.mode-btn.active {
+    background: rgba(108, 99, 255, 0.2);
+    color: #6c63ff;
+}
+
+.mode-btn svg {
+    flex-shrink: 0;
+    width: 1.125rem; /* 18px */
+    height: 1.125rem;
+}
+
+/* ===== 相机区 ===== */
+.camera-section {
+    position: relative;
+    margin-bottom: 1.25rem; /* 20px */
+}
+
+.camera-viewport {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 1rem; /* 16px */
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    max-height: 70vh;
+}
+
+#cameraPreview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 扫描框覆盖层 */
+.camera-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.scan-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 60%;
+    max-width: 20rem; /* 320px */
+    max-height: 17.5rem; /* 280px */
+}
+
+.scan-corner {
+    position: absolute;
+    width: 1.5rem; /* 24px */
+    height: 1.5rem; /* 24px */
+    border-color: #6c63ff;
+    border-style: solid;
+}
+
+.scan-corner-tl {
+    top: 0;
+    left: 0;
+    border-width: 0.1875rem 0 0 0.1875rem; /* 3px */
+    border-radius: 0.25rem 0 0 0; /* 4px */
+}
+
+.scan-corner-tr {
+    top: 0;
+    right: 0;
+    border-width: 0.1875rem 0.1875rem 0 0; /* 3px */
+    border-radius: 0 0.25rem 0 0; /* 4px */
+}
+
+.scan-corner-bl {
+    bottom: 0;
+    left: 0;
+    border-width: 0 0 0.1875rem 0.1875rem; /* 3px */
+    border-radius: 0 0 0 0.25rem; /* 4px */
+}
+
+.scan-corner-br {
+    bottom: 0;
+    right: 0;
+    border-width: 0 0.1875rem 0.1875rem 0; /* 3px */
+    border-radius: 0 0 0.25rem 0; /* 4px */
+}
+
+.scan-line {
+    position: absolute;
+    top: 0;
+    left: 5%;
+    width: 90%;
+    height: 0.125rem; /* 2px */
+    background: linear-gradient(90deg, transparent, #6c63ff, transparent);
+    animation: scanMove 2s ease-in-out infinite;
+    box-shadow: 0 0 0.5rem rgba(108, 99, 255, 0.6); /* 0 0 8px */
+}
+
+@keyframes scanMove {
+    0%, 100% {
+        top: 0;
+    }
+    50% {
+        top: calc(100% - 0.125rem); /* 2px */
+    }
+}
+
+/* 相机错误提示 */
+.camera-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem; /* 12px */
+    background: rgba(0, 0, 0, 0.8);
+    color: #ff5252;
+    padding: 1.25rem; /* 20px */
+    text-align: center;
+}
+
+.camera-error p {
+    font-size: 0.875rem; /* 14px */
+    color: #c0c0c0;
+    max-width: 17.5rem; /* 280px */
+}
+
+/* 相机控制栏 */
+.camera-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem; /* 16px 20px */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem; /* 12px */
+    margin-top: 0.5rem; /* 8px */
+}
+
+.camera-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem; /* 2px */
+}
+
+.camera-info span {
+    font-size: 0.8125rem; /* 13px */
+    color: #8080a0;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.scan-progress {
+    font-size: 0.75rem !important; /* 12px */
+    color: #6c63ff !important;
+    font-weight: 600;
+}
+
+.scan-count {
+    font-size: 1.125rem; /* 18px */
+    color: #6c63ff;
+    font-weight: 700;
+}
+
+.capture-btn {
+    width: 4rem; /* 64px */
+    height: 4rem; /* 64px */
+    border-radius: 50%;
+    border: 0.1875rem solid #6c63ff; /* 3px */
+    background: rgba(108, 99, 255, 0.15);
+    color: #6c63ff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.capture-btn:hover:not(:disabled) {
+    background: rgba(108, 99, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.capture-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.capture-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #505060;
+}
+
+.capture-btn svg {
+    width: 2rem; /* 32px */
+    height: 2rem; /* 32px */
+}
+
+.switch-camera-btn {
+    width: 2.5rem; /* 40px */
+    height: 2.5rem; /* 40px */
+    border-radius: 50%;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.15); /* 1px */
+    background: rgba(255, 255, 255, 0.05);
+    color: #8080a0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.switch-camera-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #c0c0e0;
+}
+
+.switch-camera-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* 停止扫描按钮 */
+.stop-btn {
+    width: 2.5rem; /* 40px */
+    height: 2.5rem; /* 40px */
+    border-radius: 50%;
+    border: 0.0625rem solid #ff5252; /* 1px */
+    background: rgba(255, 82, 82, 0.15);
+    color: #ff5252;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.stop-btn:hover {
+    background: rgba(255, 82, 82, 0.3);
+    transform: scale(1.1);
+}
+
+.stop-btn:active {
+    transform: scale(0.95);
+}
+
+/* 相机加载指示器 */
+.camera-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem; /* 16px */
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 1rem; /* 16px */
+    z-index: 10;
+    backdrop-filter: blur(0.25rem); /* 4px */
+}
+
+.camera-loading p {
+    font-size: 0.9375rem; /* 15px */
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+.loading-spinner {
+    width: 3rem; /* 48px */
+    height: 3rem; /* 48px */
+    border: 0.1875rem solid rgba(108, 99, 255, 0.2); /* 3px */
+    border-top-color: #6c63ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===== 横屏适配 ===== */
+@media (orientation: landscape) and (max-height: 500px) {
+    .camera-viewport {
+        aspect-ratio: 16 / 9;
+        max-height: 60vh;
+    }
+
+    .camera-controls {
+        padding: 0.625rem 1rem; /* 10px 16px */
+    }
+
+    .capture-btn {
+        width: 3.25rem; /* 52px */
+        height: 3.25rem; /* 52px */
+    }
+
+    .capture-btn svg {
+        width: 3.25rem; /* 52px */
+        height: 3.25rem; /* 52px */
+    }
+
+    .scan-frame {
+        width: 50%;
+        height: 70%;
+    }
+
+    .camera-info span {
+        font-size: 0.75rem; /* 12px */
+    }
+}
+
+/* ===== 移动端响应式 ===== */
 @media (max-width: 480px) {
-  .btn {
-    padding: 8px 14px;
-    font-size: 13px;
-  }
-  #status-text {
-    font-size: 12px;
-  }
+    html {
+        font-size: 14px; /* 移动端缩小基准，所有 rem 自动缩放 */
+    }
+
+    body {
+        padding: 0.714rem; /* ~10px at 14px base */
+    }
+
+    .header h1 {
+        font-size: 1.571rem; /* ~22px */
+    }
+
+    .upload-zone {
+        padding: 2.143rem 1.071rem; /* ~30px 15px */
+    }
+
+    .btn {
+        padding: 0.714rem 1.429rem; /* ~10px 20px */
+        font-size: 1rem; /* 14px */
+    }
+}
+
+/* ===== 小屏手机适配 ===== */
+@media (max-width: 360px) {
+    html {
+        font-size: 12px;
+    }
+
+    .mode-btn {
+        font-size: 0.833rem; /* ~10px */
+        padding: 0.5rem 0.667rem; /* ~6px 8px */
+    }
+
+    .capture-btn {
+        width: 3.333rem; /* ~40px */
+        height: 3.333rem;
+    }
+
+    .capture-btn svg {
+        width: 1.667rem; /* ~20px */
+        height: 1.667rem;
+    }
 }
